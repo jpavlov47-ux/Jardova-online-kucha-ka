@@ -1,0 +1,5 @@
+{
+  "name": "Jardova online kuchařka",
+  "description": "Aplikace pro generování a správu receptů pomocí Google Gemini.",
+  "requestFramePermissions": []
+}
