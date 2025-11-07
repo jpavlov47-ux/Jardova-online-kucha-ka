@@ -5,11 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Jardova online kuchařka</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#111827" />
+    <script>
+      // To prevent FOUC, this script is added to the head to apply the theme before rendering.
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
     <style>
       body {
         font-family: 'Inter', sans-serif;
+        /* Subtle background pattern for light mode */
+        background-color: #f9fafb;
+        background-image: radial-gradient(#d1d5db 0.5px, transparent 0.5px);
+        background-size: 15px 15px;
+        transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+      }
+      html.dark body {
+        /* Subtle background pattern for dark mode */
+        background-color: #111827;
+        background-image: radial-gradient(#4b5563 0.5px, transparent 0.5px);
       }
       @import url('https://rsms.me/inter/inter.css');
+
+      @media print {
+        body.is-printing {
+          background-color: white !important;
+          background-image: none !important;
+        }
+        
+        /* Hide everything by default when printing */
+        body.is-printing > * {
+          display: none;
+        }
+
+        /* Show only the element that should be printed */
+        body.is-printing .print-this-recipe {
+          display: block !important;
+          position: absolute;
+          top: 1rem;
+          left: 1rem;
+          right: 1rem;
+          width: auto;
+          border: none !important;
+          box-shadow: none !important;
+          background-color: white !important;
+          color: black !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .print-this-recipe h1, .print-this-recipe h2, .print-this-recipe h3, .print-this-recipe .text-orange-400, .print-this-recipe .text-transparent {
+          color: black !important;
+          text-shadow: none !important;
+          background: none !important;
+          -webkit-background-clip: initial !important;
+          background-clip: initial !important;
+          border-color: #ccc !important;
+        }
+
+        .print-this-recipe .no-print {
+          display: none !important;
+        }
+
+        .print-this-recipe img {
+          max-width: 50% !important;
+          max-height: 250px;
+          margin: 0 auto;
+          page-break-inside: avoid;
+        }
+
+        .print-this-recipe p, .print-this-recipe li, .print-this-recipe span {
+          color: #333 !important;
+          font-size: 12pt;
+        }
+        
+        .print-this-recipe ul, .print-this-recipe ol {
+            page-break-inside: avoid;
+        }
+      }
     </style>
   <script type="importmap">
 {
@@ -22,7 +99,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-900 text-white">
+  <body class="text-gray-900 dark:text-gray-100">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
   </body>

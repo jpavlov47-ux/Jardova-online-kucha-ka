@@ -9,7 +9,17 @@ export interface Recipe {
   postup: string[];
   kategorie: string;
   obrazek?: string;
+  sourceUrl?: string;
 }
+
+export interface WebSearchResult {
+    summary: string;
+    sources: Array<{
+        title: string;
+        uri: string;
+    }>;
+}
+
 
 const systemInstructions = {
     cz: "Jsi nápomocný šéfkuchař, který vytváří jednoduché a chutné recepty v českém jazyce. Vždy odpovídej ve formátu JSON.",
@@ -83,7 +93,7 @@ export const generateImage = async (prompt: string): Promise<string> => {
       config: {
         numberOfImages: 1,
         outputMimeType: 'image/jpeg',
-        aspectRatio: '16:9',
+        aspectRatio: '4:3',
       },
     });
 
@@ -100,4 +110,48 @@ export const generateImage = async (prompt: string): Promise<string> => {
     }
     throw new Error("Vyskytla se neznámá chyba při generování obrázku.");
   }
+};
+
+
+export const searchWebForRecipes = async (query: string, language: 'cz' | 'sk'): Promise<WebSearchResult> => {
+    try {
+        const fullPrompt = language === 'cz' 
+            ? `Prohledej populární české weby s recepty a najdi recepty pro '${query}'. Vytvoř krátké, zajímavé shrnutí o nalezených receptech. Můžeš zmínit zajímavosti, varianty nebo tipy k servírování. Do tohoto shrnutí NEVKLÁDEJ žádné odkazy.`
+            : `Prehľadaj populárne slovenské weby s receptami a nájdi recepty pre '${query}'. Vytvor krátke, zaujímavé zhrnutie o nájdených receptoch. Môžeš spomenúť zaujímavosti, varianty alebo tipy na servírovanie. Do tohto zhrnutia NEVKLADAJ žiadne odkazy.`;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: fullPrompt,
+            config: {
+                tools: [{ googleSearch: {} }],
+            },
+        });
+
+        const summary = response.text.trim();
+        const rawSources = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
+        
+        const sourceMap = new Map<string, { title: string; uri: string }>();
+        rawSources.forEach(chunk => {
+            if (chunk.web) {
+                const { title, uri } = chunk.web;
+                if (title && uri && !sourceMap.has(uri)) {
+                    sourceMap.set(uri, { title, uri });
+                }
+            }
+        });
+        
+        const uniqueSources = Array.from(sourceMap.values());
+
+        return {
+            summary,
+            sources: uniqueSources,
+        };
+
+    } catch (error) {
+        console.error("Chyba při vyhledávání receptů na webu:", error);
+        if (error instanceof Error) {
+            throw new Error(`Nepodařilo se vyhledat recepty: ${error.message}`);
+        }
+        throw new Error("Vyskytla se neznámá chyba při vyhledávání receptů.");
+    }
 };
